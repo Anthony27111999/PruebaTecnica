@@ -1,44 +1,65 @@
 const express = require('express');
 const datos= require('./../services/verificacionServices');
 const info = require('./../middlewares/verificacionInf');
-const model = require('./../model/dbRadiacion');
+const {select, insert} = require('./../model/dbRadiacion');
 const router = express.Router();
 
 const service = new datos;
 
 router.get('/',
         async (req, res, next) => {
-            try{
-                await console.log('paso por aca');
+          try{
+            let server = await select();       
+            server = await service.ratio(server);
+            res.status(200).json({
+              "mensagge": "andubo bien",
+              server,
+
+            });
             }catch(error){
-                await console.log('paso por aca');
+
+                res.status(400).json({
+                  "mensagge": "Error en el js"
+                });
             }
-            await console.log('paso por aca');
         }
     );
 
 router.post('/',
-    async (req, res, next) => {
+    async (req, res, next) => {        
         
         try{
             const body = req.body['data'];
             if( await service.count(body)){
-              model
-                .insert(1,0)
+              insert(1,0)
                 .then(
                   res.status(200).json({
                     "mensagge":"Tiene radiacion",  
                   })
                 )
-                .cath(err => {
-                  res.status(404).json('Hubo un error');
+                .catch(err =>{
+                  res.status(400).json({
+                    "error": err.mensagge,
+                  })
                 })
-              
             }else{
-              res.status(404).json('No tiene radiacion');
+              insert(0,1)
+              .then(
+                res.status(403).json({
+                  "message": "No tiene radiacion",
+                })
+                )
+                .catch(err =>{
+                  res.status(500).json({
+                    "error": err.mensagge,
+                  })
+                })
             };
+          
         }catch(error){
-            res.status(404).json(error.message);
+            res.status(404).json({
+              "error":error.message
+            });
         }
     }
 );
